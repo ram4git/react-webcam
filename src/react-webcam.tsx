@@ -83,6 +83,7 @@ export default class Webcam extends React.Component<WebcamProps, WebcamState> {
   private canvas: HTMLCanvasElement | null = null;
 
   private ctx: CanvasRenderingContext2D | null = null;
+  private isUnmounting = false;
 
   stream: MediaStream | null;
 
@@ -143,7 +144,16 @@ export default class Webcam extends React.Component<WebcamProps, WebcamState> {
   }
 
   componentWillUnmount() {
+    this.isUnmounting= true;
     this.stopAndCleanup();
+  }
+
+  private stopStream() {
+    const { stream } = this;
+    if (stream) {
+      stream.getVideoTracks().map(track => track.stop());
+      stream.getAudioTracks().map(track => track.stop());
+    }
   }
 
   private stopAndCleanup() {
@@ -320,6 +330,11 @@ export default class Webcam extends React.Component<WebcamProps, WebcamState> {
     }
 
     this.stream = stream;
+
+    if (this.isUnmounting) {
+      this.stopStream();
+      return;
+    }
 
     try {
       if (this.video) {
